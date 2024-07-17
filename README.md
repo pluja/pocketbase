@@ -1,6 +1,6 @@
 [![Check & test & build](https://github.com/pluja/pocketbase/actions/workflows/main.yml/badge.svg)](https://github.com/pluja/pocketbase/actions/workflows/main.yml)
 [![PocketBase](https://pocketbase.io/images/logo.svg)](https://pocketbase.io)
-
+ 
 ### Project
 This repository contains community-maintained Go SDK for Pocketbase API. Not all endpoints are covered yet, if you need some particular endpoint or feature, please feel free to open a Pull Request.
 It's well-tested and used in production in:
