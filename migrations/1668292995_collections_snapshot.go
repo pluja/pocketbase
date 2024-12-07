@@ -3,15 +3,13 @@ package migrations
 import (
 	"encoding/json"
 
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
-	"github.com/pocketbase/pocketbase/models"
 )
 
 // Auto generated migration with the most recent collections configuration.
 func init() {
-	m.Register(func(db dbx.Builder) error {
+	m.Register(func(app core.App) error {
 		jsonData := `[
     {
         "id": "_pb_users_auth_",
@@ -152,13 +150,13 @@ func init() {
     }
 ]`
 
-		collections := []*models.Collection{}
+		collections := []map[string]any{}
 		if err := json.Unmarshal([]byte(jsonData), &collections); err != nil {
 			return err
 		}
 
-		return daos.New(db).ImportCollections(collections, true, nil)
-	}, func(_ dbx.Builder) error {
+		return app.ImportCollections(collections, true)
+	}, func(_ core.App) error {
 		// no revert since the configuration on the environment, on which
 		// the migration was executed, could have changed via the UI/API
 		return nil

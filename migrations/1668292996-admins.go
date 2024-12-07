@@ -5,18 +5,23 @@ import (
 	"errors"
 	"log"
 
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
-	"github.com/pocketbase/pocketbase/models"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
-		dao := daos.New(db)
+	m.Register(func(app core.App) error {
+		superUsersCol := func() *core.Collection {
+			col, err := app.FindCachedCollectionByNameOrId(core.CollectionNameSuperusers)
+			if err != nil {
+				panic(err)
+			}
+			return col
+		}()
 
 		exists := true
-		_, err := dao.FindAdminByEmail(AdminEmailPassword)
+		_, err := app.FindAuthRecordByEmail(superUsersCol,
+			AdminEmailPassword)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
 				exists = false
@@ -31,16 +36,12 @@ func init() {
 
 		log.Println("inserting admin user: ", AdminEmailPassword)
 
-		admin := models.Admin{
-			Email: AdminEmailPassword,
-		}
+		record := core.NewRecord(superUsersCol)
+		record.SetEmail(AdminEmailPassword)
+		record.SetPassword(AdminEmailPassword)
 
-		if err := admin.SetPassword(AdminEmailPassword); err != nil {
-			return err
-		}
-
-		return dao.SaveAdmin(&admin)
-	}, func(_ dbx.Builder) error {
+		return app.Save(record)
+	}, func(_ core.App) error {
 		return nil
 	})
 }

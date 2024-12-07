@@ -4,23 +4,19 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"strings"
 
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
-	"github.com/pocketbase/pocketbase/models"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
-		dao := daos.New(db)
-		collection, err := dao.FindCollectionByNameOrId("users")
+	m.Register(func(app core.App) error {
+		collection, err := app.FindCollectionByNameOrId("users")
 		if err != nil {
 			return err
 		}
 
-		_, err = dao.FindFirstRecordByData(collection.Name, "email", UserEmailPassword)
+		_, err = app.FindFirstRecordByData(collection.Name, "email", UserEmailPassword)
 		exists := true
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -36,22 +32,13 @@ func init() {
 
 		log.Println("inserting normal user: ", UserEmailPassword)
 
-		r := models.NewRecord(collection)
-		if err := r.SetEmail(UserEmailPassword); err != nil {
-			return err
-		}
-		if err := r.SetUsername(strings.Split(UserEmailPassword, "@")[0]); err != nil {
-			return err
-		}
-		if err := r.SetVerified(true); err != nil {
-			return err
-		}
-		if err := r.SetPassword(UserEmailPassword); err != nil {
-			return err
-		}
+		r := core.NewRecord(collection)
+		r.SetEmail(UserEmailPassword)
+		r.SetVerified(true)
+		r.SetPassword(UserEmailPassword)
 
-		return dao.SaveRecord(r)
-	}, func(_ dbx.Builder) error {
+		return app.Save(r)
+	}, func(_ core.App) error {
 		return nil
 	})
 }
