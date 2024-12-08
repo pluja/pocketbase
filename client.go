@@ -20,9 +20,15 @@ type (
 		url        string
 		authorizer authStore
 		token      string
+		sseDebug   bool
+		restDebug  bool
 	}
 	ClientOption func(*Client)
 )
+
+func EnvIsTruthy(key string) bool {
+	return os.Getenv(key) != "" && os.Getenv(key) != "false" && os.Getenv(key) != "0"
+}
 
 func NewClient(url string, opts ...ClientOption) *Client {
 	client := resty.New()
@@ -37,8 +43,11 @@ func NewClient(url string, opts ...ClientOption) *Client {
 		authorizer: authorizeNoOp{},
 	}
 	opts = append([]ClientOption{}, opts...)
-	if debug := os.Getenv("REST_DEBUG"); debug != "" && debug != "0" && debug != "false" {
-		opts = append(opts, WithDebug())
+	if EnvIsTruthy("REST_DEBUG") {
+		opts = append(opts, WithRestDebug())
+	}
+	if EnvIsTruthy("SSE_DEBUG") {
+		opts = append(opts, WithSseDebug())
 	}
 
 	for _, opt := range opts {
@@ -48,9 +57,16 @@ func NewClient(url string, opts ...ClientOption) *Client {
 	return c
 }
 
-func WithDebug() ClientOption {
+func WithRestDebug() ClientOption {
 	return func(c *Client) {
+		c.restDebug = true
 		c.client.SetDebug(true)
+	}
+}
+
+func WithSseDebug() ClientOption {
+	return func(c *Client) {
+		c.sseDebug = true
 	}
 }
 
