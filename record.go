@@ -3,31 +3,63 @@ package pocketbase
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 )
 
-type (
-	AuthMethod struct {
-		AuthProviders    []AuthProvider `json:"authProviders"`
-		UsernamePassword bool           `json:"usernamePassword"`
-		EmailPassword    bool           `json:"emailPassword"`
-		OnlyVerified     bool           `json:"onlyVerified"`
-	}
+type otpResponse struct {
+	Enabled  bool  `json:"enabled"`
+	Duration int64 `json:"duration"` // in seconds
+}
 
-	AuthProvider struct {
-		Name                string `json:"name"`
-		DisplayName         string `json:"displayName"`
-		State               string `json:"state"`
-		AuthURL             string `json:"authUrl"`
-		CodeVerifier        string `json:"codeVerifier"`
-		CodeChallenge       string `json:"codeChallenge"`
-		CodeChallengeMethod string `json:"codeChallengeMethod"`
-	}
-)
+type mfaResponse struct {
+	Enabled  bool  `json:"enabled"`
+	Duration int64 `json:"duration"` // in seconds
+}
+
+type passwordResponse struct {
+	IdentityFields []string `json:"identityFields"`
+	Enabled        bool     `json:"enabled"`
+}
+
+type oauth2Response struct {
+	Providers []providerInfo `json:"providers"`
+	Enabled   bool           `json:"enabled"`
+}
+
+type providerInfo struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+	State       string `json:"state"`
+	AuthURL     string `json:"authURL"`
+
+	// @todo
+	// deprecated: use AuthURL instead
+	// AuthUrl will be removed after dropping v0.22 support
+	AuthUrl string `json:"authUrl"`
+
+	// technically could be omitted if the provider doesn't support PKCE,
+	// but to avoid breaking existing typed clients we'll return them as empty string
+	CodeVerifier        string `json:"codeVerifier"`
+	CodeChallenge       string `json:"codeChallenge"`
+	CodeChallengeMethod string `json:"codeChallengeMethod"`
+}
+
+// Borrowed from https://github.com/pocketbase/pocketbase/blob/844f18cac379fc749493dc4dd73638caa89167a1/apis/record_auth_methods.go#L52
+type AuthMethodsResponse struct {
+	Password passwordResponse `json:"password"`
+	OAuth2   oauth2Response   `json:"oauth2"`
+	MFA      mfaResponse      `json:"mfa"`
+	OTP      otpResponse      `json:"otp"`
+
+	// legacy fields
+	// @todo remove after dropping v0.22 support
+	AuthProviders    []providerInfo `json:"authProviders"`
+	UsernamePassword bool           `json:"usernamePassword"`
+	EmailPassword    bool           `json:"emailPassword"`
+}
 
 // ListAuthMethods returns all available collection auth methods.
-func (c *Collection[T]) ListAuthMethods() (AuthMethod, error) {
-	var response AuthMethod
+func (c *Collection[T]) ListAuthMethods() (AuthMethodsResponse, error) {
+	var response AuthMethodsResponse
 	if err := c.Authorize(); err != nil {
 		return response, err
 	}
@@ -373,69 +405,6 @@ func (c *Collection[T]) ConfirmEmailChange(emailChangeToken string, password str
 
 	if resp.IsError() {
 		return fmt.Errorf("[records] pocketbase returned status at confirm-email-change: %d, msg: %s, err %w",
-			resp.StatusCode(),
-			resp.String(),
-			ErrInvalidResponse,
-		)
-	}
-	return nil
-}
-
-type ExternalAuthRequest struct {
-	ID           string `json:"id"`
-	Created      string `json:"created"`
-	Updated      string `json:"updated"`
-	RecordID     string `json:"recordId"`
-	CollectionID string `json:"collectionId"`
-	Provider     string `json:"provider"`
-	ProviderID   string `json:"providerId"`
-}
-
-// ListExternalAuths lists all linked external auth providers for the specified auth record.
-func (c *Collection[T]) ListExternalAuths(recordID string) ([]ExternalAuthRequest, error) {
-	var response []ExternalAuthRequest
-	if err := c.Authorize(); err != nil {
-		return response, err
-	}
-
-	request := c.client.R().
-		SetHeader("Content-Type", "application/json")
-
-	resp, err := request.Get(c.baseCrudPath() + url.QueryEscape(recordID) + "/external-auths")
-	if err != nil {
-		return response, fmt.Errorf("[records] can't send list external-auths request to pocketbase, err %w", err)
-	}
-
-	if resp.IsError() {
-		return response, fmt.Errorf("[records] pocketbase request for list external-auths returned status: %d, msg: %s, err %w",
-			resp.StatusCode(),
-			resp.String(),
-			ErrInvalidResponse,
-		)
-	}
-
-	if err := json.Unmarshal(resp.Body(), &response); err != nil {
-		return response, fmt.Errorf("[records] can't unmarshal list external-auths response, err %w", err)
-	}
-	return response, nil
-}
-
-// UnlinkExternalAuth unlink a single external auth provider from the specified auth record.
-func (c *Collection[T]) UnlinkExternalAuth(recordID string, provider string) error {
-	if err := c.Authorize(); err != nil {
-		return err
-	}
-
-	request := c.client.R().
-		SetHeader("Content-Type", "application/json")
-
-	resp, err := request.Delete(c.baseCrudPath() + url.QueryEscape(recordID) + "/external-auths/" + url.QueryEscape(provider))
-	if err != nil {
-		return fmt.Errorf("[records] can't send unlink-external-auth-request to pocketbase, err %w", err)
-	}
-
-	if resp.IsError() {
-		return fmt.Errorf("[records] pocketbase returned status at unlink-external-auth-: %d, msg: %s, err %w",
 			resp.StatusCode(),
 			resp.String(),
 			ErrInvalidResponse,
