@@ -47,7 +47,7 @@ func TestBackup_Create(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 		err := defaultClient.Backup().Create()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "The request requires valid admin authorization token to be set.")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("with valid authentication, create backup without name and check", func(t *testing.T) {
@@ -168,7 +168,7 @@ func TestBackup_Upload(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 		err := defaultClient.Backup().Upload("foobar", bytes.NewReader([]byte{10}))
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "The request requires valid admin authorization token to be set.")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("upload a backup", func(t *testing.T) {
