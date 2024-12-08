@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/duke-git/lancet/v2/convertor"
@@ -27,7 +28,8 @@ type (
 )
 
 func EnvIsTruthy(key string) bool {
-	return os.Getenv(key) != "" && os.Getenv(key) != "false" && os.Getenv(key) != "0"
+	val := strings.ToLower(os.Getenv(key))
+	return val == "1" || val == "true" || val == "yes"
 }
 
 func NewClient(url string, opts ...ClientOption) *Client {
