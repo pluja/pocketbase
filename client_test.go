@@ -349,7 +349,8 @@ func TestClient_Create(t *testing.T) {
 			name:       "Create with no body",
 			client:     defaultClient,
 			collection: migrations.PostsPublic,
-			wantErr:    true,
+			wantErr:    false,
+			wantID:     true,
 		},
 		{
 			name:       "Create with body",
@@ -377,8 +378,16 @@ func TestClient_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r, err := tt.client.Create(tt.collection, tt.body)
-			assert.Equal(t, tt.wantErr, err != nil, err)
-			assert.Equal(t, tt.wantID, r.ID != "")
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			if tt.wantID {
+				assert.NotEmpty(t, r.ID)
+			} else {
+				assert.Empty(t, r.ID)
+			}
 		})
 	}
 }

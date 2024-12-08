@@ -75,7 +75,7 @@ func TestCollection_AuthRefresh(t *testing.T) {
 
 		_, err := CollectionSet[User](defaultClient, "users").AuthRefresh()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "valid authorization token")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("refresh authentication with invalid user auth token", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestCollection_AuthRefresh(t *testing.T) {
 		defaultClient.token = strings.Repeat("X", 207)
 		_, err := CollectionSet[User](defaultClient, "users").AuthRefresh()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "valid authorization token")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("refresh authentication with valid user auth token", func(t *testing.T) {
@@ -182,7 +182,7 @@ func TestCollection_RequestEmailChange(t *testing.T) {
 
 		err := CollectionSet[User](defaultClient, "users").RequestEmailChange("useruser@user.com")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "valid authorization token")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 }
 
