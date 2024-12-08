@@ -136,7 +136,7 @@ func TestBackup_Restore(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 		err := defaultClient.Backup().Restore("foobar")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "The request requires valid admin authorization token to be set.")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("restore a backup", func(t *testing.T) {
