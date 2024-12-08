@@ -6,5 +6,5 @@ const (
 	PostsUser          = "posts_user"
 	PostsPublic        = "posts_public"
 	AdminEmailPassword = "admin@admin.com"
-	UserEmailPassword  = "user@user.com" //nolint:gosec
+	UserEmailPassword  = "user@user.com"
 )

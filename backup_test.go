@@ -16,7 +16,7 @@ func TestBackup_FullList(t *testing.T) {
 		resp, err := defaultClient.Backup().FullList()
 		assert.Nil(t, resp)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "The request requires valid admin authorization token to be set.")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("with valid authentication, but no existing backups", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestBackup_Delete(t *testing.T) {
 		defaultClient := NewClient(defaultURL)
 		err := defaultClient.Backup().Delete("foobar")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "The request requires valid admin authorization token to be set.")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("create a backup and delete it", func(t *testing.T) {

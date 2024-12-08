@@ -8,6 +8,7 @@ import (
 
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/go-resty/resty/v2"
+	"github.com/pocketbase/pocketbase/core"
 )
 
 var ErrInvalidResponse = errors.New("invalid response")
@@ -49,7 +50,7 @@ func WithDebug() ClientOption {
 
 func WithAdminEmailPassword(email, password string) ClientOption {
 	return func(c *Client) {
-		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+"/api/admins/auth-with-password", email, password)
+		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+fmt.Sprintf("/api/collections/%s/auth-with-password", core.CollectionNameSuperusers), email, password)
 	}
 }
 
@@ -67,7 +68,7 @@ func WithUserEmailPasswordAndCollection(email, password, collection string) Clie
 
 func WithAdminToken(token string) ClientOption {
 	return func(c *Client) {
-		c.authorizer = newAuthorizeToken(c.client, c.url+"/api/admins/auth-refresh", token)
+		c.authorizer = newAuthorizeToken(c.client, c.url+fmt.Sprintf("/api/collections/%s/auth-refresh", core.CollectionNameSuperusers), token)
 	}
 }
 
