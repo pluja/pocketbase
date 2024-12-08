@@ -36,19 +36,15 @@ func NewClient(url string, opts ...ClientOption) *Client {
 		url:        url,
 		authorizer: authorizeNoOp{},
 	}
+	opts = append([]ClientOption{}, opts...)
+	if debug := os.Getenv("REST_DEBUG"); debug != "" && debug != "0" && debug != "false" {
+		opts = append(opts, WithDebug())
+	}
+
 	for _, opt := range opts {
 		opt(c)
 	}
 
-	return c
-}
-
-func NewTestClient(url string, opts ...ClientOption) *Client {
-	opts = append([]ClientOption{}, opts...)
-	if debug := os.Getenv("DEBUG"); debug != "" && debug != "0" && debug != "false" {
-		opts = append(opts, WithDebug())
-	}
-	c := NewClient(url, opts...)
 	return c
 }
 
@@ -112,6 +108,39 @@ func (c *Client) Update(collection string, id string, body any) error {
 			resp.String(),
 			ErrInvalidResponse,
 		)
+	}
+
+	return nil
+}
+
+func (c *Client) Get(path string, result any, onRequest func(*resty.Request), onResponse func(*resty.Response)) error {
+	if err := c.Authorize(); err != nil {
+		return err
+	}
+
+	request := c.client.R().
+		SetHeader("Content-Type", "application/json")
+	if onRequest != nil {
+		onRequest(request)
+	}
+
+	resp, err := request.Get(c.url + path)
+	if err != nil {
+		return fmt.Errorf("[get] can't send get request to pocketbase, err %w", err)
+	}
+	if onResponse != nil {
+		onResponse(resp)
+	}
+	if resp.IsError() {
+		return fmt.Errorf("[get] pocketbase returned status: %d, msg: %s, err %w",
+			resp.StatusCode(),
+			resp.String(),
+			ErrInvalidResponse,
+		)
+	}
+
+	if err := json.Unmarshal(resp.Body(), result); err != nil {
+		return fmt.Errorf("[get] failed to unmarshal response: %w", err)
 	}
 
 	return nil
