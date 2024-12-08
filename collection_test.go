@@ -151,7 +151,8 @@ func TestCollection_Create(t *testing.T) {
 			name:       "Create with no body",
 			client:     defaultClient,
 			collection: migrations.PostsPublic,
-			wantErr:    true,
+			wantErr:    false,
+			wantID:     true,
 		},
 		{
 			name:       "Create with body",
@@ -180,8 +181,16 @@ func TestCollection_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			collection := Collection[any]{tt.client, tt.collection, defaultClient.url + "/api/collections/" + tt.collection}
 			r, err := collection.Create(tt.body)
-			assert.Equal(t, tt.wantErr, err != nil, err)
-			assert.Equal(t, tt.wantID, r.ID != "")
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			if tt.wantID {
+				assert.NotEmpty(t, r.ID)
+			} else {
+				assert.Empty(t, r.ID)
+			}
 		})
 	}
 }

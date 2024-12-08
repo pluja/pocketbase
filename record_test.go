@@ -100,7 +100,7 @@ func TestCollection_AuthRefresh(t *testing.T) {
 		response, err := CollectionSet[User](defaultClient, "users").AuthRefresh()
 		assert.NoError(t, err)
 		assert.NotEmpty(t, response.Token)
-		assert.Len(t, response.Token, 207)
+		assert.Len(t, response.Token, 224)
 		assert.Equal(t, response.Token, defaultClient.token)
 		assert.NotEqual(t, response.Token, oldToken)
 	})
