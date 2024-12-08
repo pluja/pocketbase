@@ -10,7 +10,7 @@ import (
 )
 
 func TestCollection_List(t *testing.T) {
-	defaultClient := NewClient(defaultURL)
+	defaultClient := NewTestClient(defaultURL)
 
 	tests := []struct {
 		name       string
@@ -66,7 +66,7 @@ func TestCollection_List(t *testing.T) {
 }
 
 func TestCollection_Delete(t *testing.T) {
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/" + "collectionname"}
 
@@ -97,7 +97,7 @@ func TestCollection_Delete(t *testing.T) {
 }
 
 func TestCollection_Update(t *testing.T) {
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/collectionname"}
 
@@ -134,7 +134,7 @@ func TestCollection_Update(t *testing.T) {
 }
 
 func TestCollection_Create(t *testing.T) {
-	defaultClient := NewClient(defaultURL)
+	defaultClient := NewTestClient(defaultURL)
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
 	}
@@ -187,7 +187,7 @@ func TestCollection_Create(t *testing.T) {
 }
 
 func TestCollection_One(t *testing.T) {
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/collectionname"}
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/duke-git/lancet/v2/convertor"
@@ -39,6 +40,15 @@ func NewClient(url string, opts ...ClientOption) *Client {
 		opt(c)
 	}
 
+	return c
+}
+
+func NewTestClient(url string, opts ...ClientOption) *Client {
+	opts = append([]ClientOption{}, opts...)
+	if debug := os.Getenv("DEBUG"); debug != "" && debug != "0" && debug != "false" {
+		opts = append(opts, WithDebug())
+	}
+	c := NewClient(url, opts...)
 	return c
 }
 

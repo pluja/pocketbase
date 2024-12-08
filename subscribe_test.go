@@ -11,7 +11,7 @@ import (
 )
 
 func TestCollection_Subscribe(t *testing.T) {
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
 	}
@@ -76,7 +76,7 @@ func TestCollection_Subscribe(t *testing.T) {
 }
 
 func TestCollection_Unsubscribe(t *testing.T) {
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
 	}
@@ -116,7 +116,7 @@ func TestCollection_RealtimeReconnect(t *testing.T) {
 		return
 	}
 
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	transport := &http.Transport{
 		Dial: func(network, addr string) (net.Conn, error) {
 			conn, err := net.Dial(network, addr)

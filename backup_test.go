@@ -12,7 +12,7 @@ import (
 
 func TestBackup_FullList(t *testing.T) {
 	t.Run("without authorization", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL)
+		defaultClient := NewTestClient(defaultURL)
 		resp, err := defaultClient.Backup().FullList()
 		assert.Nil(t, resp)
 		assert.Error(t, err)
@@ -20,7 +20,7 @@ func TestBackup_FullList(t *testing.T) {
 	})
 
 	t.Run("with valid authentication, but no existing backups", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		resp, err := defaultClient.Backup().FullList()
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
@@ -28,7 +28,7 @@ func TestBackup_FullList(t *testing.T) {
 	})
 
 	t.Run("with valid authentication, create backup and check", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		err := defaultClient.Backup().Create()
 		require.NoError(t, err)
 
@@ -44,14 +44,14 @@ func TestBackup_FullList(t *testing.T) {
 
 func TestBackup_Create(t *testing.T) {
 	t.Run("without authorization", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL)
+		defaultClient := NewTestClient(defaultURL)
 		err := defaultClient.Backup().Create()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("with valid authentication, create backup without name and check", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		resp, err := defaultClient.Backup().FullList()
 		require.NoError(t, err)
 		require.Empty(t, resp)
@@ -69,7 +69,7 @@ func TestBackup_Create(t *testing.T) {
 	})
 
 	t.Run("with valid authentication, create backup with name and check", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		const backupName = "foobar"
 		err := defaultClient.Backup().Create(backupName)
 		assert.NoError(t, err)
@@ -81,7 +81,7 @@ func TestBackup_Create(t *testing.T) {
 	})
 
 	t.Run("with valid authentication, create backup with name incl. zip-extension and check", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		const backupName = "barfoo.zip"
 		err := defaultClient.Backup().Create(backupName)
 		assert.NoError(t, err)
@@ -95,14 +95,14 @@ func TestBackup_Create(t *testing.T) {
 
 func TestBackup_Delete(t *testing.T) {
 	t.Run("without authorization", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL)
+		defaultClient := NewTestClient(defaultURL)
 		err := defaultClient.Backup().Delete("foobar")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("create a backup and delete it", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		backupName := "foobar.zip"
 
 		err := defaultClient.Backup().Create(backupName)
@@ -115,7 +115,7 @@ func TestBackup_Delete(t *testing.T) {
 	})
 
 	t.Run("create a backup and delete a non existing", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		backupName := "foobar.zip"
 
 		err := defaultClient.Backup().Create(backupName)
@@ -133,14 +133,14 @@ func TestBackup_Delete(t *testing.T) {
 
 func TestBackup_Restore(t *testing.T) {
 	t.Run("without authorization", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL)
+		defaultClient := NewTestClient(defaultURL)
 		err := defaultClient.Backup().Restore("foobar")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("restore a backup", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		backupName := "foobar.zip"
 
 		err := defaultClient.Backup().Create(backupName)
@@ -155,7 +155,7 @@ func TestBackup_Restore(t *testing.T) {
 	})
 
 	t.Run("cannot restore a backup with a nox existing key", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		backupName := "not_existing.zip"
 
 		err := defaultClient.Backup().Restore(backupName)
@@ -165,14 +165,14 @@ func TestBackup_Restore(t *testing.T) {
 
 func TestBackup_Upload(t *testing.T) {
 	t.Run("without authorization", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL)
+		defaultClient := NewTestClient(defaultURL)
 		err := defaultClient.Backup().Upload("foobar", bytes.NewReader([]byte{10}))
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("upload a backup", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		backupName := "foobar_test.zip"
 
 		file, err := os.Open("./testressources/pb_backup.zip")
@@ -193,14 +193,14 @@ func TestBackup_Upload(t *testing.T) {
 
 func TestBackup_GetDownloadURL(t *testing.T) {
 	t.Run("build URL with token and key", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		url, err := defaultClient.Backup().GetDownloadURL("token", "key")
 		assert.NoError(t, err)
 		assert.Equal(t, defaultURL+"/api/backups/key?token=token", url)
 	})
 
 	t.Run("build URL with no token and no key", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
+		defaultClient := NewTestClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
 		url, err := defaultClient.Backup().GetDownloadURL("", "")
 		assert.Error(t, err)
 		assert.Empty(t, url)

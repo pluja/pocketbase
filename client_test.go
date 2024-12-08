@@ -28,7 +28,7 @@ func TestAuthorizeAnonymous(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewClient(defaultURL)
+			c := NewTestClient(defaultURL)
 			err := c.Authorize()
 			assert.Equal(t, tt.wantErr, err != nil)
 		})
@@ -84,11 +84,11 @@ func TestListAccess(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewClient(defaultURL)
+			c := NewTestClient(defaultURL)
 			if tt.admin.email != "" {
-				c = NewClient(defaultURL, WithAdminEmailPassword(tt.admin.email, tt.admin.password))
+				c = NewTestClient(defaultURL, WithAdminEmailPassword(tt.admin.email, tt.admin.password))
 			} else if tt.user.email != "" {
-				c = NewClient(defaultURL, WithUserEmailPassword(tt.user.email, tt.user.password))
+				c = NewTestClient(defaultURL, WithUserEmailPassword(tt.user.email, tt.user.password))
 			}
 			r, err := c.List(tt.collection, ParamsList{})
 			assert.Equal(t, tt.wantErr, err != nil, err)
@@ -131,11 +131,11 @@ func TestAuthorizeEmailPassword(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewClient(defaultURL)
+			c := NewTestClient(defaultURL)
 			if tt.admin.email != "" {
-				c = NewClient(defaultURL, WithAdminEmailPassword(tt.admin.email, tt.admin.password))
+				c = NewTestClient(defaultURL, WithAdminEmailPassword(tt.admin.email, tt.admin.password))
 			} else if tt.user.email != "" {
-				c = NewClient(defaultURL, WithUserEmailPassword(tt.user.email, tt.user.password))
+				c = NewTestClient(defaultURL, WithUserEmailPassword(tt.user.email, tt.user.password))
 			}
 			err := c.Authorize()
 			assert.Equal(t, tt.wantErr, err != nil)
@@ -178,11 +178,11 @@ func TestAuthorizeToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := NewClient(defaultURL)
+			c := NewTestClient(defaultURL)
 			if tt.admin {
 				var token string
 				if tt.validToken {
-					c = NewClient(defaultURL,
+					c = NewTestClient(defaultURL,
 						WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword),
 					)
 					_ = c.Authorize()
@@ -190,11 +190,11 @@ func TestAuthorizeToken(t *testing.T) {
 				} else {
 					token = "invalid_token"
 				}
-				c = NewClient(defaultURL, WithAdminToken(token))
+				c = NewTestClient(defaultURL, WithAdminToken(token))
 			} else if tt.user {
 				var token string
 				if tt.validToken {
-					c = NewClient(defaultURL,
+					c = NewTestClient(defaultURL,
 						WithUserEmailPassword(migrations.UserEmailPassword, migrations.UserEmailPassword),
 					)
 					_ = c.Authorize()
@@ -202,7 +202,7 @@ func TestAuthorizeToken(t *testing.T) {
 				} else {
 					token = "invalid_token"
 				}
-				c = NewClient(defaultURL, WithUserToken(token))
+				c = NewTestClient(defaultURL, WithUserToken(token))
 			}
 			err := c.Authorize()
 			assert.Equal(t, tt.wantErr, err != nil)
@@ -211,7 +211,7 @@ func TestAuthorizeToken(t *testing.T) {
 }
 
 func TestClient_List(t *testing.T) {
-	defaultClient := NewClient(defaultURL)
+	defaultClient := NewTestClient(defaultURL)
 
 	tests := []struct {
 		name       string
@@ -266,7 +266,7 @@ func TestClient_List(t *testing.T) {
 }
 
 func TestClient_Delete(t *testing.T) {
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 
 	// delete non-existing item
@@ -296,7 +296,7 @@ func TestClient_Delete(t *testing.T) {
 }
 
 func TestClient_Update(t *testing.T) {
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 
 	// update non-existing item
@@ -332,7 +332,7 @@ func TestClient_Update(t *testing.T) {
 }
 
 func TestClient_Create(t *testing.T) {
-	defaultClient := NewClient(defaultURL)
+	defaultClient := NewTestClient(defaultURL)
 	defaultBody := map[string]interface{}{
 		"field": "value_" + time.Now().Format(time.StampMilli),
 	}
@@ -384,7 +384,7 @@ func TestClient_Create(t *testing.T) {
 }
 
 func TestClient_One(t *testing.T) {
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 
 	// Get non-existing item
@@ -410,7 +410,7 @@ func TestClient_One(t *testing.T) {
 }
 
 func TestClient_OneTo(t *testing.T) {
-	client := NewClient(defaultURL)
+	client := NewTestClient(defaultURL)
 	field := "value_" + time.Now().Format(time.StampMilli)
 
 	// Get non-existing item
