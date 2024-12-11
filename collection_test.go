@@ -9,6 +9,68 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestListAccess(t *testing.T) {
+	type auth struct {
+		email    string
+		password string
+	}
+	tests := []struct {
+		name       string
+		admin      auth
+		user       auth
+		collection string
+		wantResult bool
+		wantErr    bool
+	}{
+		{
+			name:       "With admin credentials - posts_admin",
+			admin:      auth{email: migrations.AdminEmailPassword, password: migrations.AdminEmailPassword},
+			collection: migrations.PostsAdmin,
+			wantResult: true,
+			wantErr:    false,
+		},
+		{
+			name:       "Without credentials - posts_admin",
+			collection: migrations.PostsAdmin,
+			wantErr:    true,
+		},
+		{
+			name:       "Without credentials - posts_public",
+			collection: migrations.PostsPublic,
+			wantResult: true,
+			wantErr:    false,
+		},
+		{
+			// For access rule @request.auth.id != ""
+			// no error is returned, but empty result
+			name:       "Without credentials - posts_user",
+			collection: migrations.PostsUser,
+			wantResult: false,
+			wantErr:    false,
+		},
+		{
+			name:       "With user credentials - posts_user",
+			user:       auth{email: migrations.UserEmailPassword, password: migrations.UserEmailPassword},
+			collection: migrations.PostsUser,
+			wantResult: true,
+			wantErr:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := NewClient(defaultURL).Collection(tt.collection)
+			if tt.admin.email != "" {
+				c = NewClient(defaultURL, WithAdminEmailPassword(tt.admin.email, tt.admin.password)).Collection(tt.collection)
+			} else if tt.user.email != "" {
+				c = NewClient(defaultURL, WithUserEmailPassword(tt.user.email, tt.user.password)).Collection(tt.collection)
+			}
+			r, err := c.List(ParamsList{})
+			assert.Equal(t, tt.wantErr, err != nil, err)
+			assert.Equal(t, tt.wantResult, r.TotalItems > 0)
+		})
+	}
+}
+
 func TestCollection_List(t *testing.T) {
 	defaultClient := NewClient(defaultURL)
 
@@ -196,9 +258,8 @@ func TestCollection_Create(t *testing.T) {
 }
 
 func TestCollection_One(t *testing.T) {
-	client := NewClient(defaultURL)
+	collection := NewClient(defaultURL).Collection(migrations.PostsPublic)
 	field := "value_" + time.Now().Format(time.StampMilli)
-	collection := Collection[map[string]any]{client, migrations.PostsPublic, client.url + "/api/collections/collectionname"}
 
 	// update non-existing item
 	_, err := collection.One("non_existing_id")
@@ -226,4 +287,38 @@ func TestCollection_One(t *testing.T) {
 	item, err = collection.One(resultCreated.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, field+"_updated", item["field"])
+}
+
+func TestClient_OneTo(t *testing.T) {
+	client := NewClient(defaultURL).Collection(migrations.PostsPublic)
+	field := "value_" + time.Now().Format(time.StampMilli)
+
+	// Get non-existing item
+	var nonExistingResult map[string]any
+	err := client.OneTo("non_existing_id", &nonExistingResult)
+	assert.Error(t, err)
+
+	// Create temporary item
+	resultCreated, err := client.Create(map[string]any{
+		"field": field,
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, resultCreated.ID)
+
+	// Define a struct for the response
+	type Post struct {
+		ID    string `json:"id"`
+		Field string `json:"field"`
+	}
+
+	// Get existing item
+	var result Post
+	err = client.OneTo(resultCreated.ID, &result)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, field, result.Field)
+
+	// Clean up: Delete temporary item
+	err = client.Delete(resultCreated.ID)
+	assert.NoError(t, err)
 }
