@@ -26,8 +26,89 @@ type (
 )
 
 // ListAuthMethods returns all available collection auth methods.
-func (c *Collection[T]) ListAuthMethods() (AuthMethod, error) {
+func (c *Collection[T]) ListAuthMethods22() (AuthMethod, error) {
 	var response AuthMethod
+	if err := c.Authorize(); err != nil {
+		return response, err
+	}
+
+	request := c.client.R().
+		SetHeader("Content-Type", "application/json")
+
+	resp, err := request.Get(c.BaseCollectionPath + "/auth-methods")
+	if err != nil {
+		return response, fmt.Errorf("[records] can't send ListAuthMethods request to pocketbase, err %w", err)
+	}
+
+	if resp.IsError() {
+		return response, fmt.Errorf("[records] pocketbase returned status: %d, msg: %s, err %w",
+			resp.StatusCode(),
+			resp.String(),
+			ErrInvalidResponse,
+		)
+	}
+
+	if err := json.Unmarshal(resp.Body(), &response); err != nil {
+		return response, fmt.Errorf("[records] can't unmarshal response, err %w", err)
+	}
+	return response, nil
+}
+
+type otpResponse struct {
+	Enabled  bool  `json:"enabled"`
+	Duration int64 `json:"duration"` // in seconds
+}
+
+type mfaResponse struct {
+	Enabled  bool  `json:"enabled"`
+	Duration int64 `json:"duration"` // in seconds
+}
+
+type passwordResponse struct {
+	IdentityFields []string `json:"identityFields"`
+	Enabled        bool     `json:"enabled"`
+}
+
+type oauth2Response struct {
+	Providers []providerInfo `json:"providers"`
+	Enabled   bool           `json:"enabled"`
+}
+
+type providerInfo struct {
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+	State       string `json:"state"`
+	AuthURL     string `json:"authURL"`
+
+	// @todo
+	// deprecated: use AuthURL instead
+	// AuthUrl will be removed after dropping v0.22 support
+	AuthUrl string `json:"authUrl"`
+
+	// technically could be omitted if the provider doesn't support PKCE,
+	// but to avoid breaking existing typed clients we'll return them as empty string
+	CodeVerifier        string `json:"codeVerifier"`
+	CodeChallenge       string `json:"codeChallenge"`
+	CodeChallengeMethod string `json:"codeChallengeMethod"`
+}
+
+// Borrowed from https://github.com/pocketbase/pocketbase/blob/844f18cac379fc749493dc4dd73638caa89167a1/apis/record_auth_methods.go#L52
+type AuthMethodsResponse struct {
+	Password passwordResponse `json:"password"`
+	OAuth2   oauth2Response   `json:"oauth2"`
+	MFA      mfaResponse      `json:"mfa"`
+	OTP      otpResponse      `json:"otp"`
+
+	// legacy fields
+	// @todo remove after dropping v0.22 support
+	AuthProviders    []providerInfo `json:"authProviders"`
+	UsernamePassword bool           `json:"usernamePassword"`
+	EmailPassword    bool           `json:"emailPassword"`
+}
+
+// ListAuthMethods returns all available collection auth methods.
+func (c *Collection[T]) ListAuthMethods() (AuthMethodsResponse, error) {
+	var response AuthMethodsResponse
 	if err := c.Authorize(); err != nil {
 		return response, err
 	}
@@ -392,7 +473,7 @@ type ExternalAuthRequest struct {
 }
 
 // ListExternalAuths lists all linked external auth providers for the specified auth record.
-func (c *Collection[T]) ListExternalAuths(recordID string) ([]ExternalAuthRequest, error) {
+func (c *Collection[T]) ListExternalAuths22(recordID string) ([]ExternalAuthRequest, error) {
 	var response []ExternalAuthRequest
 	if err := c.Authorize(); err != nil {
 		return response, err
@@ -421,7 +502,7 @@ func (c *Collection[T]) ListExternalAuths(recordID string) ([]ExternalAuthReques
 }
 
 // UnlinkExternalAuth unlink a single external auth provider from the specified auth record.
-func (c *Collection[T]) UnlinkExternalAuth(recordID string, provider string) error {
+func (c *Collection[T]) UnlinkExternalAuth22(recordID string, provider string) error {
 	if err := c.Authorize(); err != nil {
 		return err
 	}

@@ -45,6 +45,9 @@ func (c *Collection[T]) SubscribeWith(opts SubscribeOptions, targets ...string) 
 
 	handleSSEEvent := func(ev eventsource.Event) {
 		var e Event[T]
+		if c.sseDebug {
+			log.Printf("SSE event: %+v", ev)
+		}
 		e.Error = json.Unmarshal([]byte(ev.Data()), &e)
 		stream.channel.C <- e
 	}

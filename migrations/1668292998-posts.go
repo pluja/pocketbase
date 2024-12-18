@@ -3,33 +3,30 @@ package migrations
 import (
 	"log"
 
-	"github.com/pocketbase/dbx"
-	"github.com/pocketbase/pocketbase/daos"
+	"github.com/pocketbase/pocketbase/core"
 	m "github.com/pocketbase/pocketbase/migrations"
-	"github.com/pocketbase/pocketbase/models"
 )
 
 func init() {
-	m.Register(func(db dbx.Builder) error {
-		dao := daos.New(db)
+	m.Register(func(app core.App) error {
 		for _, c := range []string{PostsAdmin, PostsUser, PostsPublic} {
-			collection, err := dao.FindCollectionByNameOrId(c)
+			collection, err := app.FindCollectionByNameOrId(c)
 			if err != nil {
 				return err
 			}
 
 			log.Println("inserting post to: ", c)
 
-			r := models.NewRecord(collection)
+			r := core.NewRecord(collection)
 			r.Set("field", "test")
 
-			if err := dao.SaveRecord(r); err != nil {
+			if err := app.Save(r); err != nil {
 				return err
 			}
 		}
 
 		return nil
-	}, func(_ dbx.Builder) error {
+	}, func(_ core.App) error {
 		return nil
 	})
 }

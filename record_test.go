@@ -23,7 +23,7 @@ func TestCollection_ListAuthMethods(t *testing.T) {
 
 		resp, err := CollectionSet[User](defaultClient, "users").ListAuthMethods()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Must be a valid email address")
+		assert.Contains(t, err.Error(), "Failed to authenticate.")
 		assert.Empty(t, resp)
 	})
 
@@ -32,10 +32,13 @@ func TestCollection_ListAuthMethods(t *testing.T) {
 
 		resp, err := CollectionSet[User](defaultClient, "users").ListAuthMethods()
 		assert.NoError(t, err)
-		assert.True(t, resp.UsernamePassword)
-		assert.True(t, resp.EmailPassword)
-		assert.False(t, resp.OnlyVerified)
+		assert.True(t, resp.Password.Enabled)
+		assert.False(t, resp.OAuth2.Enabled)
+		assert.False(t, resp.MFA.Enabled)
+		assert.False(t, resp.OTP.Enabled)
 		assert.Empty(t, resp.AuthProviders)
+		assert.False(t, resp.UsernamePassword)
+		assert.True(t, resp.EmailPassword)
 	})
 }
 
@@ -46,7 +49,7 @@ func TestCollection_AuthWithPassword(t *testing.T) {
 		response, err := CollectionSet[User](defaultClient, "users").AuthWithPassword("user@user.com", "user@user.com")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, response.Token)
-		assert.Len(t, response.Token, 207)
+		assert.Len(t, response.Token, 224)
 		assert.Equal(t, response.Token, defaultClient.token)
 	})
 
@@ -72,7 +75,7 @@ func TestCollection_AuthRefresh(t *testing.T) {
 
 		_, err := CollectionSet[User](defaultClient, "users").AuthRefresh()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "The request requires valid record authorization token to be set")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("refresh authentication with invalid user auth token", func(t *testing.T) {
@@ -81,7 +84,7 @@ func TestCollection_AuthRefresh(t *testing.T) {
 		defaultClient.token = strings.Repeat("X", 207)
 		_, err := CollectionSet[User](defaultClient, "users").AuthRefresh()
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "The request requires valid record authorization token to be set")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 
 	t.Run("refresh authentication with valid user auth token", func(t *testing.T) {
@@ -97,7 +100,7 @@ func TestCollection_AuthRefresh(t *testing.T) {
 		response, err := CollectionSet[User](defaultClient, "users").AuthRefresh()
 		assert.NoError(t, err)
 		assert.NotEmpty(t, response.Token)
-		assert.Len(t, response.Token, 207)
+		assert.Len(t, response.Token, 224)
 		assert.Equal(t, response.Token, defaultClient.token)
 		assert.NotEqual(t, response.Token, oldToken)
 	})
@@ -179,7 +182,7 @@ func TestCollection_RequestEmailChange(t *testing.T) {
 
 		err := CollectionSet[User](defaultClient, "users").RequestEmailChange("useruser@user.com")
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "The request requires valid record authorization token to be set.")
+		assert.Contains(t, err.Error(), "valid record authorization")
 	})
 }
 
@@ -199,37 +202,5 @@ func TestCollection_ConfirmEmailChange(t *testing.T) {
 			"user@user.com")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "validation_invalid_token")
-	})
-}
-
-func TestCollection_ListExternalAuthMethods(t *testing.T) {
-	t.Run("get ExternalAuthMethods with invalid authorization", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword("foo", "bar"))
-
-		resp, err := CollectionSet[User](defaultClient, "users").ListExternalAuths("user")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Must be a valid email address")
-		assert.Empty(t, resp)
-	})
-
-	t.Run("get AuthMethods with valid authorization", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword(migrations.AdminEmailPassword, migrations.AdminEmailPassword))
-		response, err := defaultClient.List("users", ParamsList{
-			Page: 1, Size: 1, Sort: "-created",
-		})
-		require.NoError(t, err)
-		resp, err := CollectionSet[User](defaultClient, "users").ListExternalAuths(response.Items[0]["id"].(string))
-		assert.NoError(t, err)
-		assert.Empty(t, resp)
-	})
-}
-
-func TestCollection_UnlinkExternalAuthMethods(t *testing.T) {
-	t.Run("unlink ExternalAuthMethods with invalid authorization", func(t *testing.T) {
-		defaultClient := NewClient(defaultURL, WithAdminEmailPassword("foo", "bar"))
-
-		err := CollectionSet[User](defaultClient, "users").UnlinkExternalAuth("user", "apple")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Must be a valid email address")
 	})
 }

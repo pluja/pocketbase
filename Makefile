@@ -17,7 +17,7 @@ build: ## Build all executables, located under ./bin/
 
 serve: build ## Run the pocketbase server
 	@echo "Running server..."
-	@./bin/pocketbase serve
+	@./bin/pocketbase serve --dev
 
 clean: ## Remove all artifacts from ./bin/ and ./resources
 	@rm -rf ./bin/* ./resources/*
