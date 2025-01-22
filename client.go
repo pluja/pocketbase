@@ -78,6 +78,22 @@ func WithAdminEmailPassword22(email, password string) ClientOption {
 	}
 }
 
+// WithTimeout set the timeout for requests
+func WithTimeout(timeout time.Duration) ClientOption {
+	return func(c *Client) {
+		c.client.SetTimeout(timeout)
+	}
+}
+
+// WithRetry set the retry settings for requests (defaults: count=3, waitTime=3s, maxWaitTime=10s)
+func WithRetry(count int, waitTime, maxWaitTime time.Duration) ClientOption {
+	return func(c *Client) {
+		c.client.SetRetryCount(count)
+		c.client.SetRetryWaitTime(waitTime)
+		c.client.SetRetryMaxWaitTime(maxWaitTime)
+	}
+}
+
 func WithAdminEmailPassword(email, password string) ClientOption {
 	return func(c *Client) {
 		c.authorizer = newAuthorizeEmailPassword(c.client, c.url+fmt.Sprintf("/api/collections/%s/auth-with-password", core.CollectionNameSuperusers), email, password)

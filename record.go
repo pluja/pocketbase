@@ -80,9 +80,9 @@ type providerInfo struct {
 	State       string `json:"state"`
 	AuthURL     string `json:"authURL"`
 
-	// @todo
-	// deprecated: use AuthURL instead
-	// AuthUrl will be removed after dropping v0.22 support
+	// Deprecated: use AuthURL instead
+	//todo remove in future versions AuthUrl is a deprecated field because of wrong spelling (Url vs. URL), we need to keep it for backward compatibility with v0.22
+	//nolint:all // ignore wrong spelling linter
 	AuthUrl string `json:"authUrl"`
 
 	// technically could be omitted if the provider doesn't support PKCE,
